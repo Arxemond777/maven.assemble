@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        1.1) mvn compile - Этим вы запустите Maven, передав ему указание
+        на выполнение задачи compile. Когда он закончит, вы должны найни
+        скомпилированные .class файлы в target/classes директории.
+        1.2) mvn exec:java -Dexec.mainClass="hello.HelloWorld" -
+        запуск проекта после mvn compile
+
+
+        2.1) mvn package - сборка jar(default)/war в target/
+        2.2) java -jar target/maven-assemble-1.0-SNAPSHOT.jar - запуск
+
+        *) mvn install - прогон тестов и установка в ~/.m2 директорию
+
+        *) mvn clean - очистка target
+
+        *) mvn test - Тестирование с помощью JUnit тестов
+        *) mvn integration-test - Запуск интеграционных тестов
+
+        *) mvn deploy - публикация файла в удалённый репозиторий
+
+        *) mvn site - предназначена для создания документации (javadoc+сайт описания проекта)
+
+        *) mvn validate — проверяет корректность метаинформации о проекте
+
+        *) mvn verify — проверяет корректность пакета и удовлетворение требованиям качества
+    -->
+    <groupId>maven.assemble</groupId>
+    <artifactId>maven-assemble</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0-SNAPSHOT</version>
+
+    <properties>
+
+        <junit.version>4.5</junit.version>
+
+        <maven.compiler.source>1.8</maven.compiler.source>
+
+        <maven.compiler.target>1.8</maven.compiler.target>
+
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    </properties>
+
+
+
+    <!--
+                        SCOPE
+        1.1) По умолчанию, все зависимости определены как <compile> зависимости.
+        Т.е. они должны быть доступны во время компиляции(а если вы собираете
+        WAR-файл, то в /WEB-INF/lib каталоге). Кроме того, вы можете добавить
+        <scope> элемент, с одним из значений:
+
+        1.2) provided - зависимости, которые требуются для компиляции кода
+        проекта, но которые будут доступны во время выполнения кода контейнером
+        (например, Java Servlet API)
+
+        1.3) test - зависимости, которые используются для компиляции и запуска
+        тестов, но не требуемые для сборки или выполнения кода проекта
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>joda-time</groupId>
+            <artifactId>joda-time</artifactId>
+            <version>2.2</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <!--
+                                        Плагины
+
+            Всякий раз, когда вы хотите настроить построить для проекта Maven,
+        это делается путем добавления или перенастройки плагинов.
+            К примеру, мы разрабатываем систему используя jdk 1.6, а пользователи будут использовать
+        jdk 1.4. В этом случае нам необходимо указать итоговую версию jar-файла, и Maven включит
+        в неё все недостающие части.
+        ...
+        <build>
+          <plugins>
+            <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-compiler-plugin</artifactId>
+              <version>2.0.2</version>
+              <configuration>
+                <source>1.6</source>
+                <target>1.4</target>
+              </configuration>
+            </plugin>
+          </plugins>
+        </build>
+        ...
+            Этот плагин будет автоматически загружать и использоваться. Конфигурация элементов
+        применяет заданные параметры для каждой цели из компилятора плагинов. В приведенном выше случае,
+        компилятор плагинов уже используется как часть процесса сборки и это просто меняет конфигурацию.
+        Можно также добавить новые цели в этом процессе, и настроить конкретные цели.
+            Не у всех плагинов лишь одна цель и не все плагины, которые могут участвовать в сборки,
+        необходимо описывать в том файле. К примеру, существует плагин, который создаёт настройки проекта
+        для eclipse, чтоб его использовать его не нужно объявлять. Вызвать плагин отдельно возможно
+        следующим образом: maven plugin:execution. «Execution» говорит какое именно из своих действий(целей)
+        плагин должен выполнить. К примеру, вызов eclipse плагина для создания конфигурации:
+        $> mvn elipse:eclipse
+            Не у всех плагинах существует execution по умолчанию, для этого при описании такого плагина,
+        необходимо его указать.
+            Рассмотрим пример плагина который создаёт javadoc:
+        …
+        <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>1.5</version>
+            <executions>
+                <execution>
+                    <id>add-source</id>
+                    <phase>generate-sources</phase>
+                    <goals>
+                        <goal>add-source</goal>
+                    </goals>
+                    <configuration>
+                        <sources>
+                        <source>src/main/java</source>
+                        <source>src/main/resource</source>
+                        </sources>
+                    </configuration>
+                </execution>
+            </executions>
+        </plugin>
+        …
+            Если не включить секцию выполнения, то плагин ничего не будет делать, но поскольку
+        она присутствует, мы явно координируем работу плагина (что и как делать). Поэтому, когда
+        будет выполняться фраза сборки "add-source", данный плагин будет принимать в ней участие.
+        В секции конфигурации мы указываем исходные параметры для работы (что-то вроде входных параметров
+        для функции), а в секции целей (goals) мы указываем, что именно хотим, чтоб плагин сделал (у сложных
+        плагинов может быть несколько целей). Если мы захотим вызвать данный плагин отдельно от сборки:
+        $> mvn build-helper:add-source
+            То есть, мы вызываем явно данный плагин (а не Maven вызывает его в соответствии с той фазой на которой
+        он должен быть вызван), но конфигурацию он все равно берет из pom файла.
+    -->
+
+    <!--
+        <build>
+         <outputDirectory>target2</outputDirectory>
+          <finalName>ROOT</finalName>
+         <sourceDirectory>src/java</sourceDirectory>
+            <resources>
+                <resource>
+                    <directory>${basedir}/src/java</directory>
+                    <includes>
+                    <include>**/*.properties</include>
+                    </includes>
+                </resource>
+            </resources>
+                 <plugins>
+                     <plugin>
+                         <groupId>org.apache.maven.plugins</groupId>
+                         <artifactId>maven-pmd-plugin</artifactId>
+                         <version>2.4</version>
+                     </plugin>
+                 </plugins>
+             </build>
+
+             *) <sourceDirectory> - определяет, откуда maven будет брать файлы исходного кода.
+             По умолчанию это src/main/java, но вы можете определить, где это вам удобно.
+             Директория может быть только одна (без использования специальных плагинов)
+
+             *) <resources> - и вложенные в неё тэги <resource> определяют, одну или несколько
+             директорий, где хранятся файлы ресурсов. Ресурсы в отличие от файлов исходного
+             кода при сборке просто копируются . Директория по умолчанию src/main/resources
+
+             *) <outputDirectory> - определяет, в какую директорию компилятор будет сохранять
+             результаты компиляции - *.class файлы. Значение по умолчанию - target/classes
+
+
+            *) <finalName> - имя результирующего jar (war, ear..) файла с соответствующим
+            типу расширением, который создаётся на фазе package. Значение по умолчанию —
+            artifactId-version.
+    -->
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <transformers>
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>hello.HelloWorld</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
